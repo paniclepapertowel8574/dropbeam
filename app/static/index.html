@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DropBeam — Beam files between your devices</title>
+<style>
+  :root { --bg:#0b0e14; --card:#141824; --border:#232a3b; --accent:#7c6cff; --accent2:#38bdf8; --green:#2dd4a7; --red:#f87171; --text:#e5e7eb; --muted:#94a3b8; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:radial-gradient(1200px 600px at 70% -10%, #1a1f35 0%, var(--bg) 60%); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; padding:36px 20px; }
+  .wrap { max-width:1050px; margin:0 auto; }
+  header { text-align:center; margin-bottom:34px; }
+  h1 { font-size:34px; font-weight:700; letter-spacing:-.5px; }
+  h1 b { background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .tagline { color:var(--muted); margin-top:6px; font-size:15px; }
+  .top { display:flex; gap:20px; flex-wrap:wrap; align-items:stretch; margin-bottom:28px; }
+  .me { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:22px; display:flex; gap:18px; align-items:center; flex:1; min-width:320px; }
+  .qr { width:120px; height:120px; background:#fff; border-radius:10px; padding:8px; flex-shrink:0; }
+  .qr img { width:100%; height:100%; }
+  .me h3 { font-size:17px; margin-bottom:4px; }
+  .me p { color:var(--muted); font-size:13px; line-height:1.5; }
+  .peers-box { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:22px; flex:1.4; min-width:320px; }
+  .peers-box h3 { font-size:14px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; }
+  .peer { display:flex; align-items:center; gap:12px; background:#0f1320; border:1px solid var(--border); border-radius:10px; padding:13px 16px; margin-bottom:10px; cursor:pointer; transition:.15s; }
+  .peer:hover { border-color:var(--accent); transform:translateX(3px); }
+  .peer .dot { width:9px; height:9px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+  @keyframes pulse { 50%{opacity:.35} }
+  .none { color:var(--muted); font-size:14px; }
+  #sendPanel { display:none; background:var(--card); border:1px solid var(--accent); border-radius:16px; padding:24px; margin-bottom:26px; }
+  #sendTitle { font-size:16px; margin-bottom:14px; }
+  .dropzone { border:2px dashed var(--border); border-radius:12px; padding:34px; text-align:center; color:var(--muted); cursor:pointer; transition:.2s; margin-bottom:14px; }
+  .dropzone:hover, .dropzone.drag { border-color:var(--accent); background:rgba(124,108,255,.06); color:var(--text); }
+  textarea { width:100%; background:#0f1320; border:1px solid var(--border); color:var(--text); border-radius:10px; padding:13px; font-family:inherit; font-size:14px; resize:vertical; min-height:70px; outline:none; }
+  textarea:focus { border-color:var(--accent); }
+  .row { display:flex; justify-content:space-between; align-items:center; margin-top:12px; gap:10px; flex-wrap:wrap; }
+  button.primary { background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff; border:none; border-radius:10px; padding:11px 26px; font-weight:600; cursor:pointer; font-size:14px; }
+  button.ghost { background:none; color:var(--muted); border:none; cursor:pointer; font-size:13px; }
+  .bar { height:6px; background:#0f1320; border-radius:4px; overflow:hidden; margin-top:12px; display:none; }
+  .bar i { display:block; height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .2s; }
+  #toasts { position:fixed; bottom:20px; right:20px; z-index:99; max-width:360px; }
+  .toast { background:var(--card); border:1px solid var(--green); border-radius:12px; padding:15px 18px; margin-top:10px; box-shadow:0 8px 30px rgba(0,0,0,.45); animation:slidein .25s ease; font-size:14px; }
+  .toast.err { border-color:var(--red); }
+  @keyframes slidein { from{transform:translateY(16px);opacity:0} to{transform:none;opacity:1} }
+  .toast a { color:var(--accent2); text-decoration:none; font-weight:600; display:inline-block; margin-top:6px; margin-right:12px; }
+  .conn { text-align:center; color:var(--muted); font-size:13px; margin-top:26px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>⚡ Drop<b>Beam</b></h1>
+    <div class="tagline">Beam files &amp; text between your devices — same Wi-Fi, zero cloud.</div>
+  </header>
+
+  <div class="top">
+    <div class="me">
+      <div class="qr"><img id="qrImg" alt="QR"/></div>
+      <div>
+        <h3>You are: <span id="myName">…</span></h3>
+        <p>Scan this QR with your phone (or open this page on any device on the same network). Devices appear here automatically — tap one, then drop your files.</p>
+      </div>
+    </div>
+    <div class="peers-box">
+      <h3>Devices online</h3>
+      <div id="peers"><div class="none">Waiting for other devices…</div></div>
+    </div>
+  </div>
+
+  <div id="sendPanel">
+    <div id="sendTitle"></div>
+    <div class="dropzone" id="dropzone">📁 Drag &amp; drop files here, or click to choose</div>
+    <input type="file" id="fileInput" multiple hidden/>
+    <textarea id="textInput" placeholder="…or beam a piece of text"></textarea>
+    <div class="row">
+      <button class="ghost" onclick="closePanel()">Cancel</button>
+      <button class="primary" onclick="beamText()">Beam Text →</button>
+    </div>
+    <div class="bar" id="bar"><i></i></div>
+  </div>
+
+  <div class="conn" id="conn">connecting…</div>
+</div>
+<div id="toasts"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let myId = null, myName = '', target = null, ws = null;
+
+function toast(msg, isError = false) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (isError ? ' err' : '');
+  t.innerHTML = msg;
+  $('toasts').appendChild(t);
+  setTimeout(() => t.remove(), 15000);
+}
+
+async function init() {
+  myId = sessionStorage.getItem('db_id');
+  if (!myId) {
+    const res = await fetch('/api/register', { method: 'POST' });
+    const me = await res.json();
+    myId = me.id; myName = me.name;
+    sessionStorage.setItem('db_id', myId);
+  } else {
+    myName = sessionStorage.getItem('db_name') || '';
+  }
+  $('myName').textContent = myName || 'Device';
+  $('qrImg').src = '/qr.svg';
+  connectWS();
+}
+
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws?id=${encodeURIComponent(myId)}`);
+  ws.onopen = () => { $('conn').textContent = `🟢 live on ${location.host}`; };
+  ws.onclose = () => {
+    $('conn').textContent = 'reconnecting…';
+    setTimeout(() => { if (!ws || ws.readyState > 1) connectWS(); }, 2500);
+  };
+  ws.onmessage = ev => handle(JSON.parse(ev.data));
+}
+
+function handle(msg) {
+  if (msg.event === 'peers') return renderPeers(msg.peers);
+  if (msg.event === 'text') {
+    navigator.clipboard?.writeText(msg.text).catch(() => {});
+    toast(`💬 <b>${esc(msg.from)}</b> beamed you text (copied to clipboard):<br/><small>${esc(msg.text.slice(0, 200))}${msg.text.length > 200 ? '…' : ''}</small>`);
+  }
+  if (msg.event === 'files') {
+    let links = msg.files.map(f =>
+      `<a href="/download/${f.token}" download="${esc(f.name)}">⬇ ${esc(f.name)}</a>`).join('');
+    toast(`📎 <b>${esc(msg.from)}</b> sent you:<br/>${links}`);
+  }
+}
+
+function renderPeers(peers) {
+  const box = $('peers');
+  if (!peers.length) { box.innerHTML = '<div class="none">Waiting for other devices…</div>'; return; }
+  box.innerHTML = '';
+  peers.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'peer';
+    d.innerHTML = `<span class="dot"></span><b>${esc(p.name)}</b>`;
+    d.onclick = () => openPanel(p);
+    box.appendChild(d);
+  });
+}
+
+function openPanel(p) {
+  target = p;
+  $('sendPanel').style.display = 'block';
+  $('sendTitle').innerHTML = `Sending to <b style="color:var(--accent)">${esc(p.name)}</b>`;
+  $('sendPanel').scrollIntoView({ behavior: 'smooth' });
+}
+function closePanel() { $('sendPanel').style.display = 'none'; target = null; }
+
+$('dropzone').onclick = () => $('fileInput').click();
+$('fileInput').onchange = () => beamFiles($('fileInput').files);
+['dragover', 'dragenter'].forEach(ev => $('dropzone').addEventListener(ev, e => { e.preventDefault(); $('dropzone').classList.add('drag'); }));
+['dragleave', 'drop'].forEach(ev => $('dropzone').addEventListener(ev, e => { e.preventDefault(); $('dropzone').classList.remove('drag'); }));
+$('dropzone').addEventListener('drop', e => beamFiles(e.dataTransfer.files));
+
+function beamFiles(fileList) {
+  if (!target || !fileList.length) return;
+  const fd = new FormData();
+  fd.append('sender_id', myId);
+  [...fileList].forEach(f => fd.append('files', f));
+  const bar = $('bar'); bar.style.display = 'block';
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', `/api/send/${target.id}/file`);
+  xhr.upload.onprogress = e => { if (e.lengthComputable) bar.firstElementChild.style.width = (e.loaded / e.total * 100) + '%'; };
+  xhr.onload = () => {
+    bar.style.display = 'none'; bar.firstElementChild.style.width = '0';
+    if (xhr.status === 200) { toast(`✅ Beamed ${fileList.length} file(s) to <b>${esc(target.name)}</b>`); closePanel(); }
+    else toast(`❌ Failed (${xhr.status})`, true);
+  };
+  xhr.onerror = () => { bar.style.display = 'none'; toast('❌ Upload failed', true); };
+  xhr.send(fd);
+}
+
+async function beamText() {
+  if (!target) return;
+  const text = $('textInput').value.trim();
+  if (!text) return;
+  const res = await fetch(`/api/send/${target.id}/text`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sender_id: myId, text })
+  });
+  if (res.ok) { toast(`✅ Text beamed to <b>${esc(target.name)}</b>`); $('textInput').value = ''; closePanel(); }
+  else toast('❌ Could not deliver', true);
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+init().catch(() => toast('Failed to initialize', true));
+</script>
+</body>
+</html>

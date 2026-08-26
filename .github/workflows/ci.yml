@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest -v --tb=short
+
+      - name: Live server smoke test
+        run: |
+          python -m uvicorn app.main:app --port 8088 &
+          sleep 4
+          curl -sf http://localhost:8088/health > /dev/null
+          curl -sf http://localhost:8088/ | grep -q "DropBeam"
+          curl -sf http://localhost:8088/qr.svg | grep -q "<svg"
+          echo "Server, dashboard and QR all served successfully"
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t dropbeam:ci .
