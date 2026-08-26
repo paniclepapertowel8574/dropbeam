@@ -123,8 +123,24 @@ function connectWS() {
 function handle(msg) {
   if (msg.event === 'peers') return renderPeers(msg.peers);
   if (msg.event === 'text') {
-    navigator.clipboard?.writeText(msg.text).catch(() => {});
-    toast(`💬 <b>${esc(msg.from)}</b> beamed you text (copied to clipboard):<br/><small>${esc(msg.text.slice(0, 200))}${msg.text.length > 200 ? '…' : ''}</small>`);
+    const copied = copyText(msg.text);
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = `💬 <b>${esc(msg.from)}</b> beamed you text${copied ? ' <span style="color:var(--green)">· copied 📋</span>' : ':'}<br/><small style="color:var(--muted);word-break:break-word">${esc(msg.text.slice(0, 300))}${msg.text.length > 300 ? '…' : ''}</small>`;
+    const btn = document.createElement('a');
+    btn.href = '#';
+    btn.textContent = '📋 Copy';
+    btn.style.marginTop = '8px';
+    btn.onclick = e => {
+      e.preventDefault();
+      copyText(msg.text);
+      btn.textContent = '✓ Copied';
+      setTimeout(() => t.remove(), 1500);
+    };
+    t.appendChild(document.createElement('br'));
+    t.appendChild(btn);
+    $('toasts').appendChild(t);
+    setTimeout(() => t.remove(), 25000);
   }
   if (msg.event === 'files') {
     let links = msg.files.map(f =>
@@ -191,6 +207,28 @@ async function beamText() {
 }
 
 function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+    return true;
+  }
+  return fallbackCopy(text);
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.cssText = 'position:fixed;top:-999px;opacity:0';
+  document.body.appendChild(ta);
+  ta.select();
+  ta.setSelectionRange(0, text.length);
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  ta.remove();
+  return ok;
+}
 
 init().catch(() => toast('Failed to initialize', true));
 </script>
